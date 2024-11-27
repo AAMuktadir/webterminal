@@ -22,6 +22,7 @@ export default function Terminal() {
 
   const handleCommand = (command) => {
     const newOutput = [...output];
+    newOutput.push(`~/muktadir/portfolio${currentDirectory}$ ${command}`);
     const commandParts = command.split(" ");
     const action = commandParts[0];
     const target = commandParts[1];
