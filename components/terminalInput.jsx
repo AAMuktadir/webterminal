@@ -15,7 +15,7 @@ export default function TerminalInput({
   }, []);
   return (
     <div className="flex items-center">
-      <span className="text-white text-sm mr-2">
+      <span className="text-white text-sm mr-2 font-medium">
         ~/muktadir/portfolio{currentDirectory}$
       </span>
       <input

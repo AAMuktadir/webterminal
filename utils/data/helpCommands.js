@@ -5,5 +5,5 @@ export const getHelpCommands = [
   "cd [directory] - Change to the specified directory",
   "cd .. - Go up one directory level",
   "help - Display this help text",
-  "clear - Clear the terminal screen",
+  "clear - Clear the terminal screen or (Ctrl + l)",
 ];
