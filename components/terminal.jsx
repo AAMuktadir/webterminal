@@ -91,6 +91,11 @@ export default function Terminal() {
         newOutput.push(...getHelpCommands);
         break;
 
+      case "resume":
+        newOutput.push("Downloading Resume");
+        window.open("/file/Abdullah-Al-Muktadir.pdf", "_blank");
+        break;
+
       case "clear":
         setOutput([]);
         return;
