@@ -148,8 +148,8 @@ export default function Terminal() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[url('/img/background/background_large.jpeg')]">
-      <div className="terminal bg-gray-800 opacity-90 p-4 rounded-lg shadow-lg w-full max-w-2xl">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[url('/img/background/background_large.jpeg')] p-4">
+      <div className="terminal bg-gray-800 opacity-90 p-4 rounded-lg sm:shadow-lg w-full max-w-2xl">
         <TerminalHeader />
         <TerminalOutput output={output} />
         <TerminalInput
@@ -158,6 +158,14 @@ export default function Terminal() {
           handleKeyDown={handleKeyDown}
           currentDirectory={currentDirectory}
         />
+      </div>
+
+      {/* Mobile Message */}
+      <div className="mt-4 sm:hidden text-center">
+        <p className="text-gray-400 font-extralight mt-2">
+          For the best experience, please use a desktop, as the terminal is
+          optimized for larger screens.
+        </p>
       </div>
     </div>
   );

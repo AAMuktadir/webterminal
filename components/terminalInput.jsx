@@ -14,8 +14,8 @@ export default function TerminalInput({
     inputRef.current.focus();
   }, []);
   return (
-    <div className="flex items-center">
-      <span className="text-white text-sm mr-2 font-medium">
+    <div className="flex items-center px-2 sm:px-0">
+      <span className="text-white text-xs sm:text-sm mr-2 font-medium truncate">
         ~/muktadir/portfolio{currentDirectory}$
       </span>
       <input
@@ -24,7 +24,7 @@ export default function TerminalInput({
         value={userInput}
         onChange={(e) => setUserInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="flex-1 bg-gray-800 text-white outline-none rounded px-2 py-1"
+        className="flex-1 bg-gray-800 text-white outline-none rounded px-1 py-1 text-xs sm:text-sm"
       />
     </div>
   );

@@ -11,13 +11,14 @@ export default function TerminalHeader() {
     });
   };
   return (
-    <div className="flex justify-between items-center mb-2">
+    <div className="flex justify-between items-center mb-2 px-2 sm:px-0">
       <div className="flex space-x-2">
         <div className="w-3 h-3 bg-red-500 rounded-full"></div>
         <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
       </div>
-      <div className="text-white text-sm">{getDate()}</div>
+
+      <div className="text-white text-xs sm:text-sm truncate">{getDate()}</div>
     </div>
   );
 }
