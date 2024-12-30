@@ -45,7 +45,11 @@ export default function Terminal() {
         break;
 
       case "cd":
-        if (target === "..") {
+        if (!target) {
+          // No arguments provided, move to the root directory
+          setCurrentDirectory("/");
+          newOutput.push("Moved to the root directory");
+        } else if (target === "..") {
           if (currentDirectory !== "/") {
             const parentDir =
               currentDirectory.substring(
