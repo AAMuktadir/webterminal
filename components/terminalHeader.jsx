@@ -18,7 +18,9 @@ export default function TerminalHeader() {
         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
       </div>
 
-      <div className="text-white text-xs sm:text-sm truncate">{getDate()}</div>
+      <div className="text-white text-xs sm:text-sm truncate font-mono">
+        {getDate()}
+      </div>
     </div>
   );
 }
