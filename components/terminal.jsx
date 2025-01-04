@@ -152,7 +152,7 @@ export default function Terminal() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[url('/img/background/background_large.jpeg')] p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[url('/img/background/background_large.jpeg')] p-4 bg-cover">
       <div className="terminal bg-gray-800 opacity-90 p-4 rounded-lg sm:shadow-lg w-full max-w-2xl">
         <TerminalHeader />
         <TerminalOutput output={output} />
