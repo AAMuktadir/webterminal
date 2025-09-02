@@ -16,12 +16,14 @@ const Profile = () => {
         Abdullah Al Muktadir
       </h3>
 
-      <h4 className="text-sm font-light text-green-500">Software Engineer</h4>
+      <h4 className="text-sm font-light text-green-500">
+        Full-Stack Web Developer
+      </h4>
 
       <p className="text-white pt-4 text-center">
         A Full-Stack Developer with a passion for solving complex problems,
-        exploring innovative solutions, and adapting skills to address
-        challenges across diverse sectors.
+        exploring innovative solutions and adapting skills to address challenges
+        across diverse sectors.
       </p>
     </div>
   );

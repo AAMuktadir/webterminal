@@ -3,52 +3,57 @@ import React from "react";
 export default function Technical() {
   return (
     <div className="pt-4">
-      <h4 className="text-sm font-medium">Development technologies:</h4>
+      <h4 className="text-sm font-medium">Development Technologies:</h4>
       <ul className="list-disc list-inside">
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">Frameworks & Libraries: </span>Spring,
-          Spring Boot, NodeJs, NextJs, React, Express
+          <span className="font-semibold">Frameworks & Libraries: </span>
+          Spring, Spring Boot, Node.js, Next.js, React, Express
         </li>
 
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">Database: </span>MySQL, MongoDB,
-          Prisma, Mongoose
+          <span className="font-semibold">Databases & ORMs: </span>
+          MySQL, PostgreSQL, MongoDB, Prisma, Mongoose
         </li>
 
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">Backend Services: </span> Sanity.io,
-          PocketBase, SupaBase, FireBase
+          <span className="font-semibold">Backend & Services: </span>
+          Supabase, Firebase, Sanity, PocketBase
         </li>
 
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">UI/UX Design: </span> Figma
+          <span className="font-semibold">UI/UX Design: </span>
+          Figma, Tailwind CSS
         </li>
 
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">Additional: </span> WordPress,
-          GoogleApp Script, Tailwind CSS
+          <span className="font-semibold">Additional Tools: </span>
+          WordPress, Google Apps Script
         </li>
       </ul>
+
       <h4 className="pt-2 text-sm font-medium">Operational:</h4>
       <ul className="list-disc list-inside">
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">Project Version Control: </span>Git,
-          GitHub
+          <span className="font-semibold">Version Control: </span>
+          Git, GitHub
         </li>
 
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">Servers: </span>Apache, NGINX
+          <span className="font-semibold">Servers & Deployment: </span>
+          Apache, NGINX, PM2
         </li>
 
         <li className="marker:text-blue-600 text-xs">
-          <span className="font-semibold">Cloud Platforms: </span> Netlify,
-          Vercel, Mongo Atlas
+          <span className="font-semibold">Cloud Platforms: </span>
+          Vercel, Netlify, AWS (S3, RDS), MongoDB Atlas
         </li>
       </ul>
-      <h4 className="pt-2 text-sm font-medium">Programmistic:</h4>
+
+      <h4 className="pt-2 text-sm font-medium">Programming:</h4>
       <p className="text-xs">
-        Good knowledge of algorithms and data structures, Java, JavaScript,
-        Python. Strong problem solving skills
+        Strong problem-solving skills with solid knowledge of algorithms and
+        data structures. Proficient in JavaScript, TypeScript, and Java; working
+        knowledge of Python.
       </p>
     </div>
   );
