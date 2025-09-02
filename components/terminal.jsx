@@ -97,7 +97,7 @@ export default function Terminal() {
 
       case "resume":
         newOutput.push("Downloading Resume");
-        window.open("/file/Abdullah-Al-Muktadir-2.pdf", "_blank");
+        window.open("/file/Abdullah-Al-Muktadir.pdf", "_blank");
         break;
 
       case "clear":
