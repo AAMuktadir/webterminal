@@ -1,0 +1,49 @@
+Abdullah Al Muktadir
+Khilkhet, Dhaka, Bangladesh
+Phone: +880 1734007734
+Email: muktadir.96@gmail.com
+LinkedIn: https://linkedin.com/in/abdullah-al-m-421b619a
+GitHub: https://github.com/AAMuktadir
+
+PROFESSIONAL SUMMARY
+Software Engineer with 4+ years of experience designing and delivering scalable web applications.
+Focused on full-stack development, architecture, and performance optimization in agile environments.
+
+TECHNICAL SKILLS
+- Frameworks and Libraries: React, Next.js, Node.js, Express, Spring, Spring Boot
+- Databases: PostgreSQL, MySQL, MongoDB, Prisma, Mongoose
+- Backend Services: Sanity.io, PocketBase, Supabase, Firebase
+- UI/UX Design: Figma
+- Additional: WordPress, Google App Script, Tailwind CSS
+- Version Control: Git, GitHub
+- Servers: Apache, NGINX, PM2
+- Cloud Platforms: Netlify, Vercel, AWS (S3, RDS), Mongo Atlas
+- Languages: JavaScript/TypeScript, Java, Python
+- Concepts: OOP, Design Patterns, Data Structures and Algorithms
+
+EXPERIENCE
+
+Fullstack Web Developer - Capita Group
+May 2025 - Present
+- Rebuilt websites and CMS with Next.js, Tailwind, and Node.js (in-house)
+- Migrating vendor apps to in-house solutions
+- Auditing for UI/UX and performance improvements
+- Cross-team collaboration to meet business goals
+
+Software Engineer - Planet X Inc Ltd. (rebranded as ATnation)
+February 2022 - April 2025
+- Led full-stack development of 5+ web apps using React/Next.js, Node.js, and PostgreSQL
+- Built REST and GraphQL APIs handling 10K+ daily requests
+- Improved performance by 35% through optimization and caching
+- Mentored 3 junior developers in React best practices
+
+IT Consultant - The Biz House Ltd.
+March 2021 - January 2022
+- Managed VPS servers (NGINX/Apache) achieving 99.9% uptime
+- Coordinated vendor teams for ERP system upgrades
+- Optimized database queries, speeding reports by 50%
+
+EDUCATION
+- BSc in Computer Science and Engineering, BRAC University (CGPA: 3.43/4.00)
+- Higher Secondary Education (HSC), Dhaka City College (GPA: 4.67/5.00)
+- Secondary School Education (SSC), Naogaon Zilla School (GPA: 5.00/5.00)

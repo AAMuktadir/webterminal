@@ -43,7 +43,6 @@ export const portfolioContent = {
   resume: {
     textUrl: "/resume.txt",
     pdfUrl: "/file/Abdullah-Al-Muktadir.pdf",
-    oldPdfUrl: "/file/Abdullah-Al-Muktadir-old.pdf",
   },
   skills: {
     development: [

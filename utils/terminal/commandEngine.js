@@ -295,7 +295,6 @@ export const executeCommand = (input, state) => {
       links.push(
         toLink("Download latest PDF resume", content.resume.pdfUrl, true),
       );
-      links.push(toLink("Open previous PDF resume", content.resume.oldPdfUrl));
       lines.push(
         toLine(
           "Tip: use `cat resume` to open text resume quickly.",
