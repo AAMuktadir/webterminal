@@ -1,26 +1,68 @@
-import React from "react";
+import { useEffect, useState } from "react";
 
-export default function TerminalHeader() {
-  const getDate = () => {
-    const today = new Date();
-    return today.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+const formatClock = () =>
+  new Date().toLocaleString("en-US", {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+export default function TerminalHeader({
+  prompt,
+  themeLabel,
+  onThemeCycle,
+  onDragStart,
+  isDragging,
+}) {
+  const [clock, setClock] = useState(formatClock);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setClock(formatClock());
+    }, 1000 * 30);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
-    <div className="flex justify-between items-center mb-2 px-2 sm:px-0">
-      <div className="flex space-x-2">
-        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+    <header
+      className={`terminal-header ${isDragging ? "is-dragging" : ""}`}
+      aria-label="Terminal window controls"
+      onPointerDown={onDragStart}
+    >
+      <div className="terminal-controls" aria-hidden="true">
+        <button
+          className="control close"
+          type="button"
+          tabIndex={-1}
+          onPointerDown={(event) => event.stopPropagation()}
+        />
+        <button
+          className="control minimize"
+          type="button"
+          tabIndex={-1}
+          onPointerDown={(event) => event.stopPropagation()}
+        />
+        <button
+          className="control expand"
+          type="button"
+          onClick={onThemeCycle}
+          onPointerDown={(event) => event.stopPropagation()}
+          title="Cycle terminal theme"
+          aria-label="Cycle terminal theme"
+        />
       </div>
 
-      <div className="text-white text-xs sm:text-sm truncate font-mono">
-        {getDate()}
+      <div className="terminal-title" aria-live="polite">
+        <span>{prompt}</span>
+        <span className="terminal-title-divider">|</span>
+        <span>{themeLabel}</span>
       </div>
-    </div>
+
+      <div className="terminal-date" aria-label="Current date and time">
+        {clock}
+      </div>
+    </header>
   );
 }

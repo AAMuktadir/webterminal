@@ -1,22 +1,25 @@
 "use client";
-import React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export default function TerminalInput({
+  inputRef,
   userInput,
   setUserInput,
   handleKeyDown,
-  currentDirectory,
+  prompt,
 }) {
-  const inputRef = useRef(null);
-
   useEffect(() => {
-    inputRef.current.focus();
-  }, []);
+    inputRef.current?.focus();
+  }, [inputRef]);
+
   return (
-    <div className="flex items-center px-2 sm:px-0">
-      <span className="text-white text-xs sm:text-sm mr-2 font-medium truncate font-mono">
-        ~/muktadir/portfolio{currentDirectory}$
+    <div
+      className="terminal-input-row"
+      role="group"
+      aria-label="Terminal command input"
+    >
+      <span className="terminal-prompt" aria-hidden="true">
+        {prompt}
       </span>
       <input
         ref={inputRef}
@@ -24,7 +27,17 @@ export default function TerminalInput({
         value={userInput}
         onChange={(e) => setUserInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="flex-1 bg-gray-800 text-white outline-none rounded px-1 py-1 text-xs sm:text-sm font-mono"
+        className="terminal-input"
+        autoCapitalize="none"
+        autoCorrect="off"
+        autoComplete="off"
+        spellCheck={false}
+        aria-label="Terminal input"
+      />
+
+      <span
+        className={`terminal-cursor ${userInput ? "is-hidden" : ""}`}
+        aria-hidden="true"
       />
     </div>
   );

@@ -1,176 +1,458 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import TerminalHeader from "./terminalHeader";
 import TerminalInput from "./terminalInput";
 import TerminalOutput from "./terminalOutput";
-import { getHelpCommands } from "@/utils/data/helpCommands";
-import { directoryStructure } from "@/utils/DirectoryStructure";
+import {
+  executeCommand,
+  getAutocompleteSuggestions,
+  getPrompt,
+  getStartupEntries,
+  getThemeById,
+} from "@/utils/terminal/commandEngine";
+import { portfolioContent } from "@/utils/data/portfolioContent";
+
+const MIN_WIDTH = 560;
+const MIN_HEIGHT = 360;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const computeBounds = () => {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  const boundedWidth = clamp(viewportWidth - 20, 320, 1060);
+  const boundedHeight = clamp(viewportHeight - 84, 300, 780);
+
+  return {
+    viewportWidth,
+    viewportHeight,
+    boundedWidth,
+    boundedHeight,
+    isMobile: viewportWidth < 768,
+  };
+};
 
 export default function Terminal() {
-  const [output, setOutput] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [userInput, setUserInput] = useState("");
-  const [currentDirectory, setCurrentDirectory] = useState("/");
+  const [terminalState, setTerminalState] = useState({
+    cwd: portfolioContent.terminal.defaultDirectory,
+    themeId: portfolioContent.themes[0].id,
+  });
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [windowRect, setWindowRect] = useState({
+    x: 0,
+    y: 0,
+    width: 960,
+    height: 680,
+  });
+  const [isWindowReady, setIsWindowReady] = useState(false);
+  const [dragState, setDragState] = useState(null);
+  const [resizeState, setResizeState] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [toastMessage, setToastMessage] = useState("");
+  const terminalRootRef = useRef(null);
+  const inputRef = useRef(null);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    setOutput([...getHelpCommands]);
+    const timer = window.setTimeout(() => {
+      setEntries(getStartupEntries());
+      inputRef.current?.focus();
+    }, 200);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const checkCommand = (input) =>
-    input.startsWith("cd ")
-      ? `no such file or directory: ${input}`
-      : `Command not found: ${input}`;
+  useEffect(() => {
+    const syncViewport = () => {
+      const {
+        viewportWidth,
+        viewportHeight,
+        boundedWidth,
+        boundedHeight,
+        isMobile,
+      } = computeBounds();
+      setIsMobileViewport(isMobile);
 
-  const handleCommand = (command) => {
-    const newOutput = [...output];
-    newOutput.push(`~/muktadir/portfolio${currentDirectory}$ ${command}`);
-    const commandParts = command.split(" ");
-    const action = commandParts[0];
-    const target = commandParts[1];
-
-    const isLeafNode = !directoryStructure[currentDirectory]; // No further directories or files in the current path.
-
-    switch (action.toLowerCase()) {
-      case "ls":
-        if (isLeafNode) {
-          newOutput.push("No files or directories in this location.");
-        } else if (directoryStructure[currentDirectory]) {
-          newOutput.push(
-            directoryStructure[currentDirectory]
-              .map((item) => item.name)
-              .join(", ")
-          );
-        } else {
-          newOutput.push("No files or directories found.");
-        }
-        break;
-
-      case "cd":
-        if (!target) {
-          // No arguments provided, move to the root directory
-          setCurrentDirectory("/");
-          newOutput.push("Moved to the root directory");
-        } else if (target === "..") {
-          if (currentDirectory !== "/") {
-            const parentDir =
-              currentDirectory.substring(
-                0,
-                currentDirectory.lastIndexOf("/")
-              ) || "/";
-            setCurrentDirectory(parentDir);
-            newOutput.push(`Moved back to ${parentDir}`);
-          } else {
-            newOutput.push("You are already in the root directory");
-          }
-        } else if (isLeafNode) {
-          newOutput.push("Cannot navigate further from a file.");
-        } else {
-          const targetItem = directoryStructure[currentDirectory]?.find(
-            (item) => item.name === target
-          );
-
-          if (targetItem) {
-            if (targetItem.isDirectory) {
-              // Navigate to a directory
-              const newDir = `${
-                currentDirectory === "/" ? "" : currentDirectory
-              }/${target}`;
-              setCurrentDirectory(newDir);
-              newOutput.push(`Switched to ${newDir} directory`);
-            } else {
-              // Handle leaf files (render component)
-              const newDir = `${
-                currentDirectory === "/" ? "" : currentDirectory
-              }/${target}`;
-              setCurrentDirectory(newDir);
-              newOutput.push(`Opened ${target}`);
-              newOutput.push(targetItem.component);
-            }
-          } else {
-            newOutput.push(`'${target}' does not exist in ${currentDirectory}`);
-          }
-        }
-        break;
-
-      case "help":
-        newOutput.push(...getHelpCommands);
-        break;
-
-      case "resume":
-        newOutput.push("Downloading Resume");
-        window.open("/file/Abdullah-Al-Muktadir.pdf", "_blank");
-        break;
-
-      case "clear":
-        setOutput([]);
+      if (!initializedRef.current) {
+        const initialWidth = clamp(viewportWidth - 56, MIN_WIDTH, 980);
+        const initialHeight = clamp(viewportHeight - 120, MIN_HEIGHT, 740);
+        setWindowRect({
+          width: initialWidth,
+          height: initialHeight,
+          x: Math.max(10, (viewportWidth - initialWidth) / 2),
+          y: Math.max(16, (viewportHeight - initialHeight) / 2),
+        });
+        initializedRef.current = true;
+        setIsWindowReady(true);
         return;
+      }
 
-      default:
-        newOutput.push(checkCommand(command));
+      setWindowRect((prev) => {
+        const width = clamp(prev.width, MIN_WIDTH, boundedWidth);
+        const height = clamp(prev.height, MIN_HEIGHT, boundedHeight);
+        const x = clamp(prev.x, 8, Math.max(8, viewportWidth - width - 8));
+        const y = clamp(prev.y, 8, Math.max(8, viewportHeight - height - 8));
+        return { x, y, width, height };
+      });
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
+  }, []);
+
+  useEffect(() => {
+    if (!toastMessage) {
+      return undefined;
     }
-    setOutput(newOutput);
+
+    const timer = window.setTimeout(() => setToastMessage(""), 1400);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
+  useEffect(() => {
+    if (!dragState && !resizeState) {
+      return undefined;
+    }
+
+    const onPointerMove = (event) => {
+      const { viewportWidth, viewportHeight, boundedWidth, boundedHeight } =
+        computeBounds();
+
+      if (dragState) {
+        const deltaX = event.clientX - dragState.startX;
+        const deltaY = event.clientY - dragState.startY;
+
+        setWindowRect((prev) => {
+          const x = clamp(
+            dragState.startRect.x + deltaX,
+            8,
+            Math.max(8, viewportWidth - prev.width - 8),
+          );
+          const y = clamp(
+            dragState.startRect.y + deltaY,
+            8,
+            Math.max(8, viewportHeight - prev.height - 8),
+          );
+          return { ...prev, x, y };
+        });
+      }
+
+      if (resizeState) {
+        const deltaX = event.clientX - resizeState.startX;
+        const deltaY = event.clientY - resizeState.startY;
+
+        const nextWidth = clamp(
+          resizeState.startRect.width + deltaX,
+          MIN_WIDTH,
+          boundedWidth,
+        );
+        const nextHeight = clamp(
+          resizeState.startRect.height + deltaY,
+          MIN_HEIGHT,
+          boundedHeight,
+        );
+
+        setWindowRect((prev) => {
+          const x = clamp(
+            prev.x,
+            8,
+            Math.max(8, viewportWidth - nextWidth - 8),
+          );
+          const y = clamp(
+            prev.y,
+            8,
+            Math.max(8, viewportHeight - nextHeight - 8),
+          );
+          return { x, y, width: nextWidth, height: nextHeight };
+        });
+      }
+    };
+
+    const onPointerUp = () => {
+      setDragState(null);
+      setResizeState(null);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [dragState, resizeState]);
+
+  const startDrag = (event) => {
+    if (isMobileViewport || event.button !== 0) {
+      return;
+    }
+
+    setDragState({
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect: windowRect,
+    });
   };
 
-  const handleTabCompletion = () => {
-    const commandParts = userInput.split(" ");
-    if (commandParts[0] === "cd" && commandParts[1]) {
-      const partialName = commandParts[1];
-
-      // Find matching directories in the current directory
-      const matches = directoryStructure[currentDirectory]?.filter((item) =>
-        item.name.startsWith(partialName)
-      );
-
-      if (matches && matches.length === 1) {
-        // If there's exactly one match, complete the command
-        setUserInput(`cd ${matches[0].name}`);
-      } else if (matches && matches.length > 1) {
-        // If multiple matches, show suggestions
-        setOutput((prev) => [
-          ...prev,
-          `Suggestions: ${matches.map((item) => item.name).join(", ")}`,
-        ]);
-      } else {
-        // If no matches, do nothing (or optionally, show a message)
-        setOutput((prev) => [
-          ...prev,
-          `"${partialName}" not found in ${currentDirectory}`,
-        ]);
-      }
+  const startResize = (event) => {
+    if (isMobileViewport || event.button !== 0) {
+      return;
     }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setResizeState({
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect: windowRect,
+    });
+  };
+
+  const runCommand = (commandText) => {
+    const trimmed = commandText.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    setHistory((prev) => {
+      if (prev[prev.length - 1] === trimmed) {
+        return prev;
+      }
+      return [...prev, trimmed];
+    });
+    setHistoryIndex(-1);
+
+    const result = executeCommand(trimmed, terminalState);
+    setTerminalState(result.nextState);
+
+    if (result.meta.clear) {
+      setEntries([]);
+      setUserInput("");
+      return;
+    }
+
+    if (result.entries.length > 0) {
+      setEntries((prev) => [...prev, ...result.entries]);
+    }
+
+    if (result.meta.openInNewTab) {
+      window.open(result.meta.openInNewTab, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const commitAutocomplete = () => {
+    const suggestions = getAutocompleteSuggestions(
+      userInput,
+      terminalState.cwd,
+    );
+    if (suggestions.length === 0) {
+      return;
+    }
+
+    if (suggestions.length === 1) {
+      const [single] = suggestions;
+      const hasTrailingSpace = userInput.endsWith(" ");
+      const parts = userInput.trimStart().split(" ");
+
+      if (parts.length <= 1 && !hasTrailingSpace) {
+        setUserInput(single);
+        return;
+      }
+
+      if (hasTrailingSpace) {
+        setUserInput(`${userInput}${single}`);
+        return;
+      }
+
+      parts[parts.length - 1] = single;
+      setUserInput(parts.join(" "));
+      return;
+    }
+
+    setEntries((prev) => [
+      ...prev,
+      {
+        type: "system",
+        lines: [
+          {
+            type: "line",
+            text: `Suggestions: ${suggestions.join(", ")}`,
+            tone: "muted",
+            copyable: false,
+          },
+        ],
+        suggestions: suggestions.slice(0, 8),
+      },
+    ]);
   };
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
-      handleCommand(userInput);
+      runCommand(userInput);
       setUserInput("");
-    } else if (event.ctrlKey && event.key === "l") {
-      setOutput([]);
-    } else if (event.key === "Tab") {
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
       event.preventDefault();
-      handleTabCompletion();
+      if (history.length === 0) {
+        return;
+      }
+      const nextIndex =
+        historyIndex < 0 ? history.length - 1 : Math.max(historyIndex - 1, 0);
+      setHistoryIndex(nextIndex);
+      setUserInput(history[nextIndex]);
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (history.length === 0) {
+        return;
+      }
+      const nextIndex =
+        historyIndex < 0 ? -1 : Math.min(historyIndex + 1, history.length - 1);
+
+      if (
+        nextIndex === history.length - 1 &&
+        historyIndex === history.length - 1
+      ) {
+        setHistoryIndex(-1);
+        setUserInput("");
+        return;
+      }
+
+      if (nextIndex < 0) {
+        setHistoryIndex(-1);
+        setUserInput("");
+        return;
+      }
+
+      setHistoryIndex(nextIndex);
+      setUserInput(history[nextIndex]);
+      return;
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === "l") {
+      event.preventDefault();
+      setEntries([]);
+      return;
+    }
+
+    if (event.key === "Tab") {
+      event.preventDefault();
+      commitAutocomplete();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setUserInput("");
+      return;
     }
   };
 
+  const activeTheme = getThemeById(terminalState.themeId);
+
+  const cycleTheme = () => {
+    const themes = portfolioContent.themes;
+    const currentIndex = themes.findIndex(
+      (item) => item.id === terminalState.themeId,
+    );
+    const next = themes[(currentIndex + 1) % themes.length];
+    setTerminalState((prev) => ({ ...prev, themeId: next.id }));
+    setToastMessage(`Theme: ${next.label}`);
+  };
+
+  const runSuggestion = (command) => {
+    runCommand(command);
+    setUserInput("");
+    inputRef.current?.focus();
+  };
+
+  const handleCopy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setToastMessage("Copied to clipboard");
+    } catch {
+      setToastMessage("Copy failed");
+    }
+  };
+
+  const terminalStyle = {
+    ...activeTheme.vars,
+  };
+
+  const terminalWindowStyle = isMobileViewport
+    ? undefined
+    : {
+        width: `${windowRect.width}px`,
+        height: `${windowRect.height}px`,
+        transform: `translate(${windowRect.x}px, ${windowRect.y}px)`,
+      };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[url('/img/background/background_large-2.jpeg')] p-4 bg-cover">
-      <div className="terminal bg-gray-800 opacity-90 p-4 rounded-lg sm:shadow-lg w-full max-w-2xl">
-        <TerminalHeader />
-        <TerminalOutput output={output} />
-        <TerminalInput
-          userInput={userInput}
-          setUserInput={setUserInput}
-          handleKeyDown={handleKeyDown}
-          currentDirectory={currentDirectory}
-        />
+    <div className="terminal-page">
+      <div
+        className={`terminal-window ${!isMobileViewport ? "is-floating" : ""} ${
+          isWindowReady ? "is-visible" : ""
+        }`}
+        style={terminalWindowStyle}
+      >
+        <div
+          ref={terminalRootRef}
+          className="terminal-shell"
+          style={terminalStyle}
+          onClick={() => inputRef.current?.focus()}
+        >
+          <TerminalHeader
+            prompt={getPrompt(terminalState.cwd)}
+            themeLabel={activeTheme.label}
+            onThemeCycle={cycleTheme}
+            onDragStart={startDrag}
+            isDragging={Boolean(dragState)}
+          />
+
+          <TerminalOutput
+            entries={entries}
+            onSuggestionClick={runSuggestion}
+            onCopy={handleCopy}
+          />
+
+          <TerminalInput
+            inputRef={inputRef}
+            userInput={userInput}
+            setUserInput={setUserInput}
+            handleKeyDown={handleKeyDown}
+            prompt={getPrompt(terminalState.cwd)}
+          />
+
+          {!isMobileViewport ? (
+            <button
+              type="button"
+              className="terminal-resize-handle"
+              onPointerDown={startResize}
+              aria-label="Resize terminal window"
+              title="Resize"
+            />
+          ) : null}
+
+          {toastMessage ? (
+            <p className="terminal-toast" role="status" aria-live="polite">
+              {toastMessage}
+            </p>
+          ) : null}
+        </div>
       </div>
 
-      {/* Mobile Message */}
-      <div className="mt-4 sm:hidden text-center">
-        <p className="text-gray-400 font-extralight mt-2">
-          For the best experience, please use a desktop, as the terminal is
-          optimized for larger screens.
-        </p>
-      </div>
+      <p className="mobile-tip">
+        Mobile tip: use command shortcuts like h, me, exp, edu, pro and the
+        suggestion buttons for faster navigation.
+      </p>
     </div>
   );
 }
