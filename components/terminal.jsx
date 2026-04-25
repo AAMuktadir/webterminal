@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import TerminalHeader from "./terminalHeader";
+import SettingsPanel from "./settingsPanel";
 import TerminalInput from "./terminalInput";
 import TerminalOutput from "./terminalOutput";
 import {
@@ -54,6 +55,12 @@ export default function Terminal() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [toastMessage, setToastMessage] = useState("");
   const [isAppFullscreen, setIsAppFullscreen] = useState(false);
+  // Settings state
+  const [transparency, setTransparency] = useState(0);
+  const [fontSize, setFontSize] = useState(14);
+  const [brightness, setBrightness] = useState(100);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsAnchorRef = useRef(null);
   const terminalRootRef = useRef(null);
   const inputRef = useRef(null);
   const initializedRef = useRef(false);
@@ -187,19 +194,6 @@ export default function Terminal() {
       window.removeEventListener("pointerup", onPointerUp);
     };
   }, [dragState, resizeState]);
-
-  useEffect(() => {
-    const onFullscreenChange = () => {
-      setIsAppFullscreen(Boolean(document.fullscreenElement));
-    };
-
-    onFullscreenChange();
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-    };
-  }, []);
 
   const startDrag = (event) => {
     if (isMobileViewport || event.button !== 0) {
@@ -382,17 +376,12 @@ export default function Terminal() {
     setToastMessage(`Theme: ${next.label}`);
   };
 
-  const toggleAppFullscreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        return;
-      }
+  const toggleAppFullscreen = () => {
+    setIsAppFullscreen((prev) => !prev);
+  };
 
-      await document.exitFullscreen();
-    } catch {
-      // Ignore browser-level fullscreen restrictions without changing app behavior.
-    }
+  const handleThemeChange = (id) => {
+    setTerminalState((prev) => ({ ...prev, themeId: id }));
   };
 
   const runSuggestion = (command) => {
@@ -410,24 +399,37 @@ export default function Terminal() {
     }
   };
 
+  // Compose dynamic CSS variables from settings
   const terminalStyle = {
     ...activeTheme.vars,
+    "--terminal-font-size": `${fontSize}px`,
+    // brightness: slider range 30-100, CSS filter range 0.3-1.0
+    "--terminal-brightness": `${brightness / 100}`,
+    // transparency: slider range 0-80, CSS variable range 0.0-1.0
+    "--terminal-transparency": `${transparency / 100}`,
   };
 
-  const terminalWindowStyle = isMobileViewport
-    ? undefined
-    : {
-        width: `${windowRect.width}px`,
-        height: `${windowRect.height}px`,
-        transform: `translate(${windowRect.x}px, ${windowRect.y}px)`,
-      };
+  const terminalWindowStyle = isAppFullscreen
+    ? {
+        width: "100vw",
+        height: "100vh",
+        transform: "translate(0,0)",
+        zIndex: 200,
+      }
+    : isMobileViewport
+      ? undefined
+      : {
+          width: `${windowRect.width}px`,
+          height: `${windowRect.height}px`,
+          transform: `translate(${windowRect.x}px, ${windowRect.y}px)`,
+        };
 
   return (
     <div className="terminal-page">
       <div
         className={`terminal-window ${!isMobileViewport ? "is-floating" : ""} ${
           isWindowReady ? "is-visible" : ""
-        }`}
+        } ${isAppFullscreen ? "is-app-fullscreen" : ""}`}
         style={terminalWindowStyle}
       >
         <div
@@ -439,9 +441,10 @@ export default function Terminal() {
           <TerminalHeader
             prompt={getPrompt(terminalState.cwd)}
             themeLabel={activeTheme.label}
-            onThemeCycle={cycleTheme}
             onDragStart={startDrag}
             isDragging={Boolean(dragState)}
+            isAppFullscreen={isAppFullscreen}
+            onToggleFullscreen={toggleAppFullscreen}
           />
 
           <TerminalOutput
@@ -476,15 +479,44 @@ export default function Terminal() {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="fullscreen-btn-floating"
-        onClick={toggleAppFullscreen}
-        aria-label={isAppFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        title={isAppFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-      >
-        <span className="fullscreen-icon" aria-hidden="true" />
-      </button>
+      {/* App-level settings button — fixed top-right of viewport */}
+      <div ref={settingsAnchorRef} className="app-settings-anchor">
+        <button
+          type="button"
+          className={`settings-trigger app-settings-trigger ${settingsOpen ? "is-active" : ""}`}
+          onClick={() => setSettingsOpen((v) => !v)}
+          aria-label="Open settings"
+          title="Settings"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="10" cy="10" r="3" />
+            <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" />
+          </svg>
+        </button>
+
+        <SettingsPanel
+          isOpen={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          themeId={terminalState.themeId}
+          onThemeChange={handleThemeChange}
+          transparency={transparency}
+          onTransparency={setTransparency}
+          fontSize={fontSize}
+          onFontSize={setFontSize}
+          brightness={brightness}
+          onBrightness={setBrightness}
+        />
+      </div>
 
       <p className="mobile-tip">
         Mobile tip: use command shortcuts like h, me, exp, edu, pro and the

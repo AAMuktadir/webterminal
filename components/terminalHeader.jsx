@@ -11,9 +11,10 @@ const formatClock = () =>
 export default function TerminalHeader({
   prompt,
   themeLabel,
-  onThemeCycle,
   onDragStart,
   isDragging,
+  isAppFullscreen,
+  onToggleFullscreen,
 }) {
   const [clock, setClock] = useState(formatClock);
 
@@ -31,6 +32,7 @@ export default function TerminalHeader({
       aria-label="Terminal window controls"
       onPointerDown={onDragStart}
     >
+      {/* Left: traffic-light controls — green triggers app fullscreen */}
       <div className="terminal-controls" aria-hidden="true">
         <button
           className="control close"
@@ -47,19 +49,23 @@ export default function TerminalHeader({
         <button
           className="control expand"
           type="button"
-          onClick={onThemeCycle}
+          onClick={onToggleFullscreen}
           onPointerDown={(event) => event.stopPropagation()}
-          title="Cycle terminal theme"
-          aria-label="Cycle terminal theme"
+          title={isAppFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          aria-label={
+            isAppFullscreen ? "Exit app fullscreen" : "Enter app fullscreen"
+          }
         />
       </div>
 
+      {/* Centre: title */}
       <div className="terminal-title" aria-live="polite">
         <span>{prompt}</span>
         <span className="terminal-title-divider">|</span>
         <span>{themeLabel}</span>
       </div>
 
+      {/* Right: clock */}
       <div className="terminal-date" aria-label="Current date and time">
         {clock}
       </div>
