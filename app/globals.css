@@ -315,6 +315,38 @@ body {
   font-size: 12px;
 }
 
+.fullscreen-btn-floating {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid color-mix(in srgb, var(--terminal-muted), transparent 35%);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--terminal-bg), transparent 20%);
+  color: var(--terminal-muted);
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0.85;
+  z-index: 100;
+}
+
+.fullscreen-btn-floating:hover {
+  color: var(--terminal-text);
+  border-color: color-mix(in srgb, var(--terminal-accent), transparent 18%);
+  background: color-mix(in srgb, var(--terminal-surface), transparent 12%);
+  opacity: 1;
+}
+
+.fullscreen-icon {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  display: block;
+}
+
 .terminal-resize-handle {
   position: absolute;
   right: 6px;
@@ -408,6 +440,11 @@ body {
 
   .terminal-header {
     cursor: default;
+  }
+
+  .fullscreen-btn-floating {
+    right: 12px;
+    bottom: 12px;
   }
 
   .terminal-resize-handle {

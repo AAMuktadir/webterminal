@@ -53,6 +53,7 @@ export default function Terminal() {
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [toastMessage, setToastMessage] = useState("");
+  const [isAppFullscreen, setIsAppFullscreen] = useState(false);
   const terminalRootRef = useRef(null);
   const inputRef = useRef(null);
   const initializedRef = useRef(false);
@@ -186,6 +187,19 @@ export default function Terminal() {
       window.removeEventListener("pointerup", onPointerUp);
     };
   }, [dragState, resizeState]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsAppFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    onFullscreenChange();
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+    };
+  }, []);
 
   const startDrag = (event) => {
     if (isMobileViewport || event.button !== 0) {
@@ -368,6 +382,19 @@ export default function Terminal() {
     setToastMessage(`Theme: ${next.label}`);
   };
 
+  const toggleAppFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        return;
+      }
+
+      await document.exitFullscreen();
+    } catch {
+      // Ignore browser-level fullscreen restrictions without changing app behavior.
+    }
+  };
+
   const runSuggestion = (command) => {
     runCommand(command);
     setUserInput("");
@@ -448,6 +475,16 @@ export default function Terminal() {
           ) : null}
         </div>
       </div>
+
+      <button
+        type="button"
+        className="fullscreen-btn-floating"
+        onClick={toggleAppFullscreen}
+        aria-label={isAppFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        title={isAppFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+      >
+        <span className="fullscreen-icon" aria-hidden="true" />
+      </button>
 
       <p className="mobile-tip">
         Mobile tip: use command shortcuts like h, me, exp, edu, pro and the
