@@ -286,9 +286,16 @@ export const portfolioContent = {
       { name: "linkedin", description: "Open LinkedIn profile" },
       { name: "email", description: "Copy/open email contact" },
       { name: "whoami", description: "Show identity summary" },
-      { name: "ls", description: "List current virtual directory" },
-      { name: "cat resume", description: "Open plain-text resume" },
-      { name: "cd projects", description: "Move into project directory" },
+      { name: "ls [path]", description: "List a virtual directory or file" },
+      {
+        name: "cat <file>",
+        description:
+          "Read virtual text files; cat resume opens the text resume",
+      },
+      {
+        name: "cd [path]",
+        description: "Change directory; no path returns home (~); .. moves up",
+      },
       { name: "open <project-slug>", description: "Open a project link" },
       { name: "theme [name]", description: "List or change terminal theme" },
       { name: "date", description: "Show local date and time" },
@@ -310,14 +317,6 @@ export const portfolioContent = {
         "education",
         "contact",
         "resume.txt",
-      ],
-
-      "~/projects": [
-        "web-terminal",
-        "datasecure",
-        "track-console",
-        "pro-club",
-        "overseas-management",
       ],
 
       "~/about": ["summary.txt"],

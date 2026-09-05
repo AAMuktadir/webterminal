@@ -2,20 +2,6 @@
 import { useEffect, useRef } from "react";
 import { portfolioContent } from "@/utils/data/portfolioContent";
 
-/**
- * SettingsPanel — macOS-style glassmorphic popover for terminal customization.
- * Props:
- *   isOpen         : boolean
- *   onClose        : () => void
- *   themeId        : string
- *   onThemeChange  : (id: string) => void
- *   transparency   : number  (0–100)
- *   onTransparency : (v: number) => void
- *   fontSize       : number  (px)
- *   onFontSize     : (v: number) => void
- *   brightness     : number  (0–100, 100 = normal)
- *   onBrightness   : (v: number) => void
- */
 export default function SettingsPanel({
   isOpen,
   onClose,
@@ -34,7 +20,10 @@ export default function SettingsPanel({
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
+      if (
+        panelRef.current &&
+        !panelRef.current.parentElement.contains(e.target)
+      ) {
         onClose();
       }
     };
@@ -46,17 +35,26 @@ export default function SettingsPanel({
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose(true);
+      }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) panelRef.current?.querySelector("button")?.focus();
+  }, [isOpen]);
 
   const themes = portfolioContent.themes;
 
   return (
     <div
       ref={panelRef}
+      id="terminal-settings"
+      inert={!isOpen}
       className={`settings-panel ${isOpen ? "settings-panel--open" : ""}`}
       role="dialog"
       aria-label="Terminal settings"

@@ -84,12 +84,12 @@ body {
     color-mix(
       in srgb,
       var(--terminal-surface),
-      transparent calc(var(--terminal-transparency, 0) * 80%)
+      transparent calc(var(--terminal-transparency, 0) * 100%)
     ),
     color-mix(
       in srgb,
       var(--terminal-bg),
-      transparent calc(var(--terminal-transparency, 0) * 80%)
+      transparent calc(var(--terminal-transparency, 0) * 100%)
     )
   );
   /* Blur only active when transparency > 0 */
@@ -327,38 +327,6 @@ body {
   font-size: 12px;
 }
 
-.fullscreen-btn-floating {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  width: 22px;
-  height: 22px;
-  border: 1.5px solid color-mix(in srgb, var(--terminal-muted), transparent 35%);
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--terminal-bg), transparent 20%);
-  color: var(--terminal-muted);
-  padding: 0;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  opacity: 0.85;
-  z-index: 100;
-}
-
-.fullscreen-btn-floating:hover {
-  color: var(--terminal-text);
-  border-color: color-mix(in srgb, var(--terminal-accent), transparent 18%);
-  background: color-mix(in srgb, var(--terminal-surface), transparent 12%);
-  opacity: 1;
-}
-
-.fullscreen-icon {
-  width: 11px;
-  height: 11px;
-  border: 1.5px solid currentColor;
-  display: block;
-}
-
 .terminal-resize-handle {
   position: absolute;
   right: 6px;
@@ -423,7 +391,7 @@ body {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .terminal-page {
     padding: 10px;
     overflow: visible;
@@ -433,7 +401,7 @@ body {
   .terminal-window.is-floating {
     position: static;
     width: 100%;
-    height: calc(100vh - 106px);
+    height: calc(100dvh - 106px);
     transform: none !important;
   }
 
@@ -452,11 +420,6 @@ body {
 
   .terminal-header {
     cursor: default;
-  }
-
-  .fullscreen-btn-floating {
-    right: 12px;
-    bottom: 12px;
   }
 
   .terminal-resize-handle {
@@ -481,7 +444,7 @@ body {
   .terminal-line,
   .terminal-command-line,
   .terminal-input {
-    font-size: 13px;
+    font-size: var(--terminal-font-size, 14px);
   }
 }
 
@@ -492,7 +455,7 @@ body {
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
-  height: 100vh !important;
+  height: 100dvh !important;
   transform: none !important;
   border-radius: 0;
   transition:
@@ -507,13 +470,9 @@ body {
   border-radius: 0;
 }
 
-/* Animate the transition in/out for floating windows */
+/* Direct manipulation must track the pointer without animation lag. */
 .terminal-window.is-floating {
-  transition:
-    width 320ms cubic-bezier(0.4, 0, 0.2, 1),
-    height 320ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 320ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-radius 320ms ease;
+  transition: opacity 170ms ease;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -720,7 +679,97 @@ body {
   color: rgba(215, 235, 245, 0.9);
 }
 
-/* Remove old unused floating fullscreen button styles since it's removed from JSX */
-.fullscreen-btn-floating {
-  display: none;
+/* Keep long paths and output within the existing window at every font size. */
+.terminal-shell {
+  position: relative;
+}
+.terminal-header,
+.terminal-input-row {
+  flex-shrink: 0;
+}
+.terminal-header {
+  touch-action: none;
+  min-width: 0;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+}
+.terminal-title > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.terminal-output {
+  min-height: 0;
+  overflow-x: hidden;
+}
+.terminal-input {
+  min-width: 0;
+}
+.terminal-line,
+.terminal-link,
+.terminal-command-line,
+.terminal-suggestion-btn {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.terminal-input-row {
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+.terminal-input-row > .terminal-prompt {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.terminal-input-row > input {
+  flex-basis: 120px;
+}
+.terminal-resize-handle {
+  touch-action: none;
+}
+.settings-panel {
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 64px);
+  overflow-y: auto;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--terminal-accent, #6fe3c0);
+  outline-offset: 3px;
+}
+@media (max-width: 767px) {
+  .terminal-input-row > .terminal-prompt {
+    flex-basis: 100%;
+  }
+  .terminal-input {
+    font-size: max(16px, var(--terminal-font-size, 14px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .terminal-page {
+    height: 100dvh;
+    min-height: 0;
+    padding-top: 56px;
+  }
+  .terminal-window,
+  .terminal-window.is-floating {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
+  .mobile-tip {
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    flex-shrink: 0;
+  }
 }

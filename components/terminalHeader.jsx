@@ -16,14 +16,18 @@ export default function TerminalHeader({
   isAppFullscreen,
   onToggleFullscreen,
 }) {
-  const [clock, setClock] = useState(formatClock);
+  const [clock, setClock] = useState("");
 
   useEffect(() => {
+    const initial = window.setTimeout(() => setClock(formatClock()), 0);
     const timer = window.setInterval(() => {
       setClock(formatClock());
     }, 1000 * 30);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
   }, []);
 
   return (
@@ -33,19 +37,9 @@ export default function TerminalHeader({
       onPointerDown={onDragStart}
     >
       {/* Left: traffic-light controls — green triggers app fullscreen */}
-      <div className="terminal-controls" aria-hidden="true">
-        <button
-          className="control close"
-          type="button"
-          tabIndex={-1}
-          onPointerDown={(event) => event.stopPropagation()}
-        />
-        <button
-          className="control minimize"
-          type="button"
-          tabIndex={-1}
-          onPointerDown={(event) => event.stopPropagation()}
-        />
+      <div className="terminal-controls">
+        <span className="control close" aria-hidden="true" />
+        <span className="control minimize" aria-hidden="true" />
         <button
           className="control expand"
           type="button"

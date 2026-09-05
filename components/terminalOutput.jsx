@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 
-export default function TerminalOutput({ entries, onSuggestionClick, onCopy }) {
+export default function TerminalOutput({
+  entries,
+  onSuggestionClick,
+  onCompletionClick,
+  onCopy,
+}) {
   const containerRef = useRef(null);
   const shouldStickToBottomRef = useRef(true);
 
@@ -22,7 +27,12 @@ export default function TerminalOutput({ entries, onSuggestionClick, onCopy }) {
   };
 
   useEffect(() => {
-    if (containerRef.current && shouldStickToBottomRef.current) {
+    if (
+      containerRef.current &&
+      (shouldStickToBottomRef.current ||
+        entries.at(-1)?.type === "command" ||
+        entries.at(-1)?.completion)
+    ) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [entries]);
@@ -43,6 +53,9 @@ export default function TerminalOutput({ entries, onSuggestionClick, onCopy }) {
       ref={containerRef}
       className="terminal-output"
       onScroll={handleScroll}
+      role="log"
+      aria-label="Terminal output"
+      tabIndex={0}
       aria-live="polite"
     >
       {entries.map((entry, index) => (
@@ -76,7 +89,11 @@ export default function TerminalOutput({ entries, onSuggestionClick, onCopy }) {
                 <a
                   key={link.href + link.label}
                   href={link.href}
-                  target={link.href.startsWith("mailto:") ? "_self" : "_blank"}
+                  target={
+                    link.download || link.href.startsWith("mailto:")
+                      ? "_self"
+                      : "_blank"
+                  }
                   rel="noreferrer"
                   download={link.download ? "" : undefined}
                   className="terminal-link"
@@ -93,7 +110,11 @@ export default function TerminalOutput({ entries, onSuggestionClick, onCopy }) {
                 <button
                   type="button"
                   key={`${entry.type}-${item}`}
-                  onClick={() => onSuggestionClick(item)}
+                  onClick={() =>
+                    entry.completion
+                      ? onCompletionClick(item)
+                      : onSuggestionClick(item)
+                  }
                   className="terminal-suggestion-btn"
                 >
                   {item}

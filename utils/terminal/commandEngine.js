@@ -1,4 +1,4 @@
-import { portfolioContent } from "@/utils/data/portfolioContent";
+import { portfolioContent } from "../data/portfolioContent.js";
 
 const content = portfolioContent;
 
@@ -11,11 +11,41 @@ const outputTone = {
 };
 
 const resolveAlias = (value) =>
-  content.commands.aliases[value] ? content.commands.aliases[value] : value;
+  Object.hasOwn(content.commands.aliases, value)
+    ? content.commands.aliases[value]
+    : value;
 
 const normalizeInput = (rawInput) => rawInput.trim().replace(/\s+/g, " ");
 
-const getDirectoryItems = (cwd) => content.terminal.directories[cwd] || [];
+// All nodes are virtual; project directories follow the structured project data.
+const getDirectories = () => ({
+  ...content.terminal.directories,
+  "~/projects": content.projects.map((project) => project.slug),
+  ...Object.fromEntries(
+    content.projects.map((project) => [
+      `~/projects/${project.slug}`,
+      ["README.txt"],
+    ]),
+  ),
+});
+const isDirectory = (path) => Object.hasOwn(getDirectories(), path);
+const getDirectoryItems = (cwd) =>
+  isDirectory(cwd) ? getDirectories()[cwd] : [];
+
+// Normalize each segment while validating traversal, including file/.. paths.
+export const resolvePath = (cwd, raw = "~") => {
+  const absolute = raw === "~" || raw.startsWith("~/") || raw.startsWith("/");
+  const parts = absolute ? [] : cwd.split("/").slice(1);
+  const segments = raw.replace(/^~(?=\/|$)/, "").split("/");
+  for (const segment of segments) {
+    if (!segment) continue;
+    if (!isDirectory(["~", ...parts].join("/"))) return null;
+    if (segment === "..") parts.pop();
+    else if (segment !== ".") parts.push(segment);
+  }
+  const result = ["~", ...parts].join("/");
+  return raw.endsWith("/") && !isDirectory(result) ? null : result;
+};
 
 const toLine = (text, tone = outputTone.normal, copyable = false) => ({
   type: "line",
@@ -33,36 +63,6 @@ const toLink = (label, href, download = false) => ({
 
 const joinList = (items) => items.join("    ");
 
-const canMoveTo = (targetDir) =>
-  Boolean(content.terminal.directories[targetDir]);
-
-const resolveCd = (cwd, targetRaw) => {
-  if (!targetRaw || targetRaw === "~") {
-    return "~";
-  }
-
-  if (targetRaw === "..") {
-    if (cwd === "~") {
-      return "~";
-    }
-    const parent = cwd.split("/").slice(0, -1).join("/");
-    return parent || "~";
-  }
-
-  const target =
-    targetRaw.startsWith("~/") || targetRaw === "~"
-      ? targetRaw
-      : cwd === "~"
-        ? `~/${targetRaw}`
-        : `${cwd}/${targetRaw}`;
-
-  if (canMoveTo(target)) {
-    return target;
-  }
-
-  return null;
-};
-
 const projectBySlug = (slug) =>
   content.projects.find(
     (project) => project.slug.toLowerCase() === slug.toLowerCase(),
@@ -79,63 +79,56 @@ const parseCommand = (input) => {
   return { command, args: rest, raw: normalized };
 };
 
-export const getAutocompleteSuggestions = (input, cwd) => {
-  const normalized = input.replace(/\s+/g, " ");
-  const [cmd = "", ...args] = normalized.trimStart().split(" ");
-  const cmdLower = cmd.toLowerCase();
-  const commandSource = [
-    ...content.commands.list.map((item) => item.name.split(" ")[0]),
-    ...Object.keys(content.commands.aliases),
-  ];
-
-  if (!cmd) {
-    return Array.from(new Set(commandSource)).sort();
-  }
-
-  if (normalized.endsWith(" ")) {
-    if (cmdLower === "cd") {
-      return getDirectoryItems(cwd).filter((item) => !item.endsWith(".txt"));
-    }
-
-    if (cmdLower === "open") {
-      return content.projects.map((project) => project.slug);
-    }
-
-    if (cmdLower === "theme") {
-      return content.themes.map((theme) => theme.id);
-    }
-
-    return [];
-  }
-
-  if (args.length === 0) {
-    return Array.from(new Set(commandSource))
-      .filter((name) => name.startsWith(cmdLower))
+export const getAutocompleteSuggestions = (input, cwd = "~") => {
+  const normalized = input.trimStart().replace(/\s+/g, " ");
+  const [cmd = "", ...args] = normalized.split(" ");
+  const command = resolveAlias(cmd.toLowerCase());
+  if (!args.length) {
+    return [
+      ...new Set([
+        ...content.commands.list.map((item) => item.name.split(" ")[0]),
+        ...Object.keys(content.commands.aliases),
+      ]),
+    ]
+      .filter((name) => name.startsWith(cmd.toLowerCase()))
       .sort();
   }
-
-  const argText = args.join(" ").toLowerCase();
-
-  if (cmdLower === "cd") {
-    return getDirectoryItems(cwd)
-      .filter((item) => !item.endsWith(".txt"))
-      .filter((item) => item.startsWith(argText));
+  if (args.length > 1) return [];
+  const partial = args[0];
+  let candidates = [];
+  if (["cd", "ls", "cat"].includes(command)) {
+    const slash = partial.lastIndexOf("/");
+    const prefix = slash < 0 ? "" : partial.slice(0, slash + 1);
+    const parent = resolvePath(cwd, prefix || ".");
+    candidates = getDirectoryItems(parent).map((name) => prefix + name);
+    if (command === "cd") {
+      candidates = candidates.filter((name) =>
+        isDirectory(resolvePath(cwd, name)),
+      );
+    }
+    if (!prefix) candidates.push("~", "..");
+    if (command === "cat" && !prefix) candidates.push("resume", "resume.txt");
+    if (partial === "~") candidates.push("~/");
+  } else if (command === "open") {
+    candidates = content.projects.map((project) => project.slug);
+  } else if (command === "theme") {
+    candidates = content.themes.map((theme) => theme.id);
+  } else if (command === "sudo") {
+    candidates = ["hire-me"];
   }
-
-  if (cmdLower === "open") {
-    return content.projects
-      .map((project) => project.slug)
-      .filter((slug) => slug.startsWith(argText));
-  }
-
-  if (cmdLower === "theme") {
-    return content.themes
-      .map((theme) => theme.id)
-      .filter((themeId) => themeId.startsWith(argText));
-  }
-
-  return [];
+  return [...new Set(candidates)]
+    .filter((value) => value.toLowerCase().startsWith(partial.toLowerCase()))
+    .sort();
 };
+
+export const replaceCompletion = (input, value) =>
+  input.trimStart().replace(/\s+/g, " ").replace(/\S*$/, value);
+
+export const getCommonPrefix = (values) =>
+  values.reduce((prefix, value) => {
+    while (!value.startsWith(prefix)) prefix = prefix.slice(0, -1);
+    return prefix;
+  }, values[0] || "");
 
 export const getPrompt = (cwd) =>
   `${content.terminal.username}@${content.terminal.host}:${cwd}$`;
@@ -175,13 +168,34 @@ export const executeCommand = (input, state) => {
   const suggestions = [];
   const meta = { clear: false, openInNewTab: null };
 
+  const maxArgs = ["cd", "ls", "cat", "open", "theme", "sudo"].includes(command)
+    ? 1
+    : 0;
+  const known = content.commands.list.find(
+    (item) => item.name.split(" ")[0] === command,
+  );
+  if (known && args.length > maxArgs) {
+    return {
+      nextState,
+      entries: [
+        {
+          type: "command",
+          prompt: getPrompt(cwd),
+          input: parsed.raw,
+          lines: [toLine(`Usage: ${known.name}`, outputTone.error)],
+          links: [],
+          suggestions: [],
+        },
+      ],
+      meta,
+    };
+  }
+
   switch (command) {
     case "help":
       lines.push(toLine("Available commands:", outputTone.title));
       content.commands.list.forEach((item) => {
-        lines.push(
-          toLine(`- ${item.name.padEnd(16, " ")} ${item.description}`),
-        );
+        lines.push(toLine(`- ${item.name} ${item.description}`));
       });
       lines.push(toLine(""));
       lines.push(
@@ -189,6 +203,12 @@ export const executeCommand = (input, state) => {
           `Aliases: ${Object.entries(content.commands.aliases)
             .map(([alias, original]) => `${alias} -> ${original}`)
             .join(", ")}`,
+          outputTone.muted,
+        ),
+      );
+      lines.push(
+        toLine(
+          "Tab completes or shows choices; Shift+Tab leaves input. ↑/↓ history; Ctrl+L clears; Escape cancels.",
           outputTone.muted,
         ),
       );
@@ -238,20 +258,18 @@ export const executeCommand = (input, state) => {
         project.highlights.forEach((item) => lines.push(toLine(`- ${item}`)));
 
         if (project.github) {
-          lines.push(toLine(`GitHub: ${project.github}`));
+          links.push(toLink(`${project.title} — GitHub`, project.github));
         }
 
         if (project.live) {
-          lines.push(toLine(`Live: ${project.live}`));
+          links.push(toLink(`${project.title} — Live`, project.live));
         }
 
         lines.push(toLine(""));
       });
 
       suggestions.push(
-        "open web-terminal",
-        "open datasecure",
-        "open track-console",
+        ...content.projects.map((project) => `open ${project.slug}`),
       );
 
       break;
@@ -348,37 +366,93 @@ export const executeCommand = (input, state) => {
       break;
 
     case "ls": {
-      const items = getDirectoryItems(cwd);
-      lines.push(toLine(joinList(items), outputTone.normal));
-      break;
-    }
-
-    case "cd": {
-      const target = args[0];
-      const resolved = resolveCd(cwd, target);
-      if (!resolved) {
+      const target = resolvePath(cwd, args[0] || ".");
+      if (isDirectory(target)) {
+        const items = getDirectoryItems(target);
         lines.push(
           toLine(
-            `cd: no such file or directory: ${target || ""}`,
-            outputTone.error,
+            items.length
+              ? joinList(
+                  items.map((item) =>
+                    isDirectory(`${target}/${item}`) ? item + "/" : item,
+                  ),
+                )
+              : "(empty directory)",
           ),
         );
+      } else if (
+        target &&
+        getDirectoryItems(target.split("/").slice(0, -1).join("/")).includes(
+          target.split("/").at(-1),
+        )
+      ) {
+        lines.push(toLine(target.split("/").at(-1)));
       } else {
-        nextState.cwd = resolved;
+        lines.push(
+          toLine(`ls: no such file or directory: ${args[0]}`, outputTone.error),
+        );
       }
       break;
     }
 
+    case "cd": {
+      const target = resolvePath(cwd, args[0] || "~");
+      if (isDirectory(target)) nextState.cwd = target;
+      else
+        lines.push(toLine(`cd: not a directory: ${args[0]}`, outputTone.error));
+      break;
+    }
+
     case "cat": {
-      const target = args.join(" ");
-      if (target === "resume" || target === "resume.txt") {
+      const raw = args[0];
+      const target = ["resume", "resume.txt"].includes(raw)
+        ? "~/resume.txt"
+        : resolvePath(cwd, raw);
+      const fileCommands = {
+        "~/about/summary.txt": "about",
+        "~/experience/timeline.txt": "experience",
+        "~/education/degrees.txt": "education",
+        "~/contact/links.txt": "contact",
+      };
+      if (!raw) {
+        lines.push(
+          toLine(
+            "Usage: cat <file> (for example: cat resume)",
+            outputTone.error,
+          ),
+        );
+      } else if (target === "~/resume.txt") {
         links.push(toLink("Open resume.txt", content.resume.textUrl));
         lines.push(
           toLine("Opening text resume in a new tab...", outputTone.success),
         );
         meta.openInNewTab = content.resume.textUrl;
+      } else if (Object.hasOwn(fileCommands, target)) {
+        const entry = executeCommand(fileCommands[target], state).entries[0];
+        lines.push(...entry.lines);
+        links.push(...entry.links);
+      } else if (
+        target?.startsWith("~/projects/") &&
+        target.endsWith("/README.txt") &&
+        projectBySlug(target.split("/")[2])
+      ) {
+        const project = projectBySlug(target.split("/")[2]);
+        lines.push(
+          toLine(project.title, outputTone.title),
+          toLine(project.description),
+          toLine(`Tech: ${project.stack.join(", ")}`),
+          ...project.highlights.map((item) => toLine(`- ${item}`)),
+        );
+        if (project.live) links.push(toLink("Live Demo", project.live));
+        if (project.github) links.push(toLink("GitHub", project.github));
+        suggestions.push(`open ${project.slug}`);
       } else {
-        lines.push(toLine(`cat: ${target}: No such file`, outputTone.error));
+        lines.push(
+          toLine(
+            `cat: ${raw}: ${isDirectory(target) ? "Is a directory" : "No such file"}`,
+            outputTone.error,
+          ),
+        );
       }
       break;
     }
@@ -386,14 +460,20 @@ export const executeCommand = (input, state) => {
     case "open": {
       const slug = args[0];
       if (!slug) {
-        lines.push(toLine("open: provide a project slug", outputTone.error));
+        lines.push(toLine("Usage: open <project-slug>", outputTone.error));
+        suggestions.push(
+          ...content.projects.map((project) => `open ${project.slug}`),
+        );
         break;
       }
 
       const project = projectBySlug(slug);
       if (!project) {
         lines.push(
-          toLine(`open: project not found: ${slug}`, outputTone.error),
+          toLine(
+            `open: project not found: ${slug}. Use projects to list valid slugs.`,
+            outputTone.error,
+          ),
         );
         break;
       }
@@ -413,7 +493,7 @@ export const executeCommand = (input, state) => {
       } else {
         lines.push(
           toLine(
-            `No URL is set for ${project.slug}. Update project links in utils/data/portfolioContent.js.`,
+            `No public link is currently available for ${project.title}.`,
             outputTone.muted,
           ),
         );

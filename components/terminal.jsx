@@ -10,6 +10,8 @@ import {
   getPrompt,
   getStartupEntries,
   getThemeById,
+  replaceCompletion,
+  getCommonPrefix,
 } from "@/utils/terminal/commandEngine";
 import { portfolioContent } from "@/utils/data/portfolioContent";
 
@@ -22,8 +24,8 @@ const computeBounds = () => {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
 
-  const boundedWidth = clamp(viewportWidth - 20, 320, 1060);
-  const boundedHeight = clamp(viewportHeight - 84, 300, 780);
+  const boundedWidth = Math.max(1, Math.min(viewportWidth - 16, 1060));
+  const boundedHeight = Math.max(1, Math.min(viewportHeight - 16, 780));
 
   return {
     viewportWidth,
@@ -35,7 +37,7 @@ const computeBounds = () => {
 };
 
 export default function Terminal() {
-  const [entries, setEntries] = useState([]);
+  const [entries, setEntries] = useState(getStartupEntries);
   const [userInput, setUserInput] = useState("");
   const [terminalState, setTerminalState] = useState({
     cwd: portfolioContent.terminal.defaultDirectory,
@@ -64,15 +66,7 @@ export default function Terminal() {
   const terminalRootRef = useRef(null);
   const inputRef = useRef(null);
   const initializedRef = useRef(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setEntries(getStartupEntries());
-      inputRef.current?.focus();
-    }, 200);
-
-    return () => window.clearTimeout(timer);
-  }, []);
+  const draftRef = useRef("");
 
   useEffect(() => {
     const syncViewport = () => {
@@ -84,10 +78,20 @@ export default function Terminal() {
         isMobile,
       } = computeBounds();
       setIsMobileViewport(isMobile);
+      setDragState(null);
+      setResizeState(null);
 
       if (!initializedRef.current) {
-        const initialWidth = clamp(viewportWidth - 56, MIN_WIDTH, 980);
-        const initialHeight = clamp(viewportHeight - 120, MIN_HEIGHT, 740);
+        const initialWidth = clamp(
+          viewportWidth - 56,
+          Math.min(MIN_WIDTH, boundedWidth),
+          Math.min(980, boundedWidth),
+        );
+        const initialHeight = clamp(
+          viewportHeight - 120,
+          Math.min(MIN_HEIGHT, boundedHeight),
+          Math.min(740, boundedHeight),
+        );
         setWindowRect({
           width: initialWidth,
           height: initialHeight,
@@ -188,15 +192,17 @@ export default function Terminal() {
 
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
 
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
     };
   }, [dragState, resizeState]);
 
   const startDrag = (event) => {
-    if (isMobileViewport || event.button !== 0) {
+    if (isMobileViewport || isAppFullscreen || event.button !== 0) {
       return;
     }
 
@@ -208,7 +214,7 @@ export default function Terminal() {
   };
 
   const startResize = (event) => {
-    if (isMobileViewport || event.button !== 0) {
+    if (isMobileViewport || isAppFullscreen || event.button !== 0) {
       return;
     }
 
@@ -234,6 +240,7 @@ export default function Terminal() {
       return [...prev, trimmed];
     });
     setHistoryIndex(-1);
+    draftRef.current = "";
 
     const result = executeCommand(trimmed, terminalState);
     setTerminalState(result.nextState);
@@ -249,7 +256,11 @@ export default function Terminal() {
     }
 
     if (result.meta.openInNewTab) {
-      window.open(result.meta.openInNewTab, "_blank", "noopener,noreferrer");
+      if (result.meta.openInNewTab.startsWith("mailto:")) {
+        window.location.href = result.meta.openInNewTab;
+      } else {
+        window.open(result.meta.openInNewTab, "_blank", "noopener,noreferrer");
+      }
     }
   };
 
@@ -262,23 +273,12 @@ export default function Terminal() {
       return;
     }
 
-    if (suggestions.length === 1) {
-      const [single] = suggestions;
-      const hasTrailingSpace = userInput.endsWith(" ");
-      const parts = userInput.trimStart().split(" ");
-
-      if (parts.length <= 1 && !hasTrailingSpace) {
-        setUserInput(single);
-        return;
-      }
-
-      if (hasTrailingSpace) {
-        setUserInput(`${userInput}${single}`);
-        return;
-      }
-
-      parts[parts.length - 1] = single;
-      setUserInput(parts.join(" "));
+    const common = getCommonPrefix(suggestions);
+    if (
+      suggestions.length === 1 ||
+      common.length > userInput.trimStart().split(/\s/).at(-1).length
+    ) {
+      setUserInput(replaceCompletion(userInput, common));
       return;
     }
 
@@ -294,12 +294,16 @@ export default function Terminal() {
             copyable: false,
           },
         ],
-        suggestions: suggestions.slice(0, 8),
+        suggestions: suggestions.map((value) =>
+          replaceCompletion(userInput, value),
+        ),
+        completion: true,
       },
     ]);
   };
 
   const handleKeyDown = (event) => {
+    if (event.nativeEvent.isComposing) return;
     if (event.key === "Enter") {
       runCommand(userInput);
       setUserInput("");
@@ -311,6 +315,7 @@ export default function Terminal() {
       if (history.length === 0) {
         return;
       }
+      if (historyIndex < 0) draftRef.current = userInput;
       const nextIndex =
         historyIndex < 0 ? history.length - 1 : Math.max(historyIndex - 1, 0);
       setHistoryIndex(nextIndex);
@@ -320,29 +325,15 @@ export default function Terminal() {
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      if (history.length === 0) {
-        return;
-      }
-      const nextIndex =
-        historyIndex < 0 ? -1 : Math.min(historyIndex + 1, history.length - 1);
-
-      if (
-        nextIndex === history.length - 1 &&
-        historyIndex === history.length - 1
-      ) {
+      if (historyIndex < 0) return;
+      const nextIndex = historyIndex + 1;
+      if (nextIndex >= history.length) {
         setHistoryIndex(-1);
-        setUserInput("");
-        return;
+        setUserInput(draftRef.current);
+      } else {
+        setHistoryIndex(nextIndex);
+        setUserInput(history[nextIndex]);
       }
-
-      if (nextIndex < 0) {
-        setHistoryIndex(-1);
-        setUserInput("");
-        return;
-      }
-
-      setHistoryIndex(nextIndex);
-      setUserInput(history[nextIndex]);
       return;
     }
 
@@ -352,13 +343,24 @@ export default function Terminal() {
       return;
     }
 
-    if (event.key === "Tab") {
+    if (
+      event.key === "Tab" &&
+      !event.shiftKey &&
+      !event.ctrlKey &&
+      !event.altKey &&
+      inputRef.current.selectionStart === userInput.length &&
+      inputRef.current.selectionEnd === userInput.length &&
+      getAutocompleteSuggestions(userInput, terminalState.cwd).length > 0
+    ) {
       event.preventDefault();
       commitAutocomplete();
       return;
     }
 
     if (event.key === "Escape") {
+      setHistoryIndex(-1);
+      draftRef.current = "";
+      setIsAppFullscreen(false);
       setUserInput("");
       return;
     }
@@ -366,17 +368,9 @@ export default function Terminal() {
 
   const activeTheme = getThemeById(terminalState.themeId);
 
-  const cycleTheme = () => {
-    const themes = portfolioContent.themes;
-    const currentIndex = themes.findIndex(
-      (item) => item.id === terminalState.themeId,
-    );
-    const next = themes[(currentIndex + 1) % themes.length];
-    setTerminalState((prev) => ({ ...prev, themeId: next.id }));
-    setToastMessage(`Theme: ${next.label}`);
-  };
-
   const toggleAppFullscreen = () => {
+    setDragState(null);
+    setResizeState(null);
     setIsAppFullscreen((prev) => !prev);
   };
 
@@ -412,7 +406,7 @@ export default function Terminal() {
   const terminalWindowStyle = isAppFullscreen
     ? {
         width: "100vw",
-        height: "100vh",
+        height: "100dvh",
         transform: "translate(0,0)",
         zIndex: 200,
       }
@@ -425,7 +419,14 @@ export default function Terminal() {
         };
 
   return (
-    <div className="terminal-page">
+    <div
+      className="terminal-page"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !settingsOpen && isAppFullscreen) {
+          setIsAppFullscreen(false);
+        }
+      }}
+    >
       <div
         className={`terminal-window ${!isMobileViewport ? "is-floating" : ""} ${
           isWindowReady ? "is-visible" : ""
@@ -436,7 +437,14 @@ export default function Terminal() {
           ref={terminalRootRef}
           className="terminal-shell"
           style={terminalStyle}
-          onClick={() => inputRef.current?.focus()}
+          onClick={(event) => {
+            if (
+              !event.target.closest("button, a, input") &&
+              !window.getSelection()?.toString()
+            ) {
+              inputRef.current?.focus();
+            }
+          }}
         >
           <TerminalHeader
             prompt={getPrompt(terminalState.cwd)}
@@ -450,22 +458,54 @@ export default function Terminal() {
           <TerminalOutput
             entries={entries}
             onSuggestionClick={runSuggestion}
+            onCompletionClick={(value) => {
+              setUserInput(value);
+              setHistoryIndex(-1);
+              inputRef.current?.focus();
+            }}
             onCopy={handleCopy}
           />
 
           <TerminalInput
             inputRef={inputRef}
             userInput={userInput}
-            setUserInput={setUserInput}
+            setUserInput={(value) => {
+              setUserInput(value);
+              setHistoryIndex(-1);
+            }}
             handleKeyDown={handleKeyDown}
             prompt={getPrompt(terminalState.cwd)}
           />
 
-          {!isMobileViewport ? (
+          {!isMobileViewport && !isAppFullscreen ? (
             <button
               type="button"
               className="terminal-resize-handle"
               onPointerDown={startResize}
+              onKeyDown={(event) => {
+                const directions = {
+                  ArrowRight: [20, 0],
+                  ArrowLeft: [-20, 0],
+                  ArrowUp: [0, -20],
+                  ArrowDown: [0, 20],
+                };
+                if (!directions[event.key]) return;
+                event.preventDefault();
+                const [dx, dy] = directions[event.key];
+                setWindowRect((prev) => ({
+                  ...prev,
+                  width: clamp(
+                    prev.width + dx,
+                    Math.min(MIN_WIDTH, window.innerWidth - prev.x - 8),
+                    window.innerWidth - prev.x - 8,
+                  ),
+                  height: clamp(
+                    prev.height + dy,
+                    Math.min(MIN_HEIGHT, window.innerHeight - prev.y - 8),
+                    window.innerHeight - prev.y - 8,
+                  ),
+                }));
+              }}
               aria-label="Resize terminal window"
               title="Resize"
             />
@@ -486,6 +526,8 @@ export default function Terminal() {
           className={`settings-trigger app-settings-trigger ${settingsOpen ? "is-active" : ""}`}
           onClick={() => setSettingsOpen((v) => !v)}
           aria-label="Open settings"
+          aria-expanded={settingsOpen}
+          aria-controls="terminal-settings"
           title="Settings"
         >
           <svg
@@ -506,7 +548,11 @@ export default function Terminal() {
 
         <SettingsPanel
           isOpen={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
+          onClose={(restoreFocus = false) => {
+            setSettingsOpen(false);
+            if (restoreFocus)
+              settingsAnchorRef.current?.querySelector("button")?.focus();
+          }}
           themeId={terminalState.themeId}
           onThemeChange={handleThemeChange}
           transparency={transparency}

@@ -61,6 +61,11 @@ cd ..
 cat resume
 ```
 
+Paths support `~`, `/`, `.`, `..`, and nested relative paths. Project folders
+are generated from `portfolioContent.projects`; each contains a readable `README.txt`.
+Other listed text files render their matching portfolio content. `cat resume` and
+`cat resume.txt` remain global shortcuts that open the current text resume.
+
 Virtual directories include:
 
 ```text
@@ -242,7 +247,16 @@ open <project>
 theme <theme-name>
 ```
 
-Project suggestions are generated dynamically from portfolio data.
+Project and theme suggestions are generated dynamically from portfolio data.
+Tab completes a unique match or common prefix and displays clickable choices
+when ambiguous. Completion choices fill the command input; press Enter to run.
+Shift+Tab leaves the input, and ordinary Tab navigation remains available when
+there is no completion or the caret is inside the input. History restores your
+draft when you return past the newest entry. Ctrl+L clears output without losing history.
+Escape cancels input, closes settings, or exits fullscreen.
+
+The green window control maximizes/restores the app. Red/yellow dots are decorative.
+The resize handle supports arrow keys as well as pointer dragging.
 
 ### Dynamic Window Management
 
@@ -314,6 +328,23 @@ http://localhost:3000
 
 ---
 
+## Verification
+
+Use Node.js 22 or newer.
+
+```bash
+npm test
+npm run lint
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+Browser tests run against the production build and cover commands, downloads,
+keyboard interactions, settings, window controls, and widths from 320 to 1440px.
+External opening destinations are captured without relying on third-party uptime.
+See [the audit report](docs/AUDIT.md) for scope and limitations.
+
 ## Build
 
 ```bash
@@ -349,7 +380,10 @@ The terminal command engine consumes this data dynamically.
 
 ## Resume
 
-The terminal supports both text and PDF versions of my resume.
+The terminal supports both text and PDF versions of my resume. Keep the current
+manually authored files below updated together with portfolio content.
+The historical 2025 PDF is retained in `docs/archive/` and is not served by the app.
+The redundant root-level text copy has been removed.
 
 ```text
 /public/resume.txt
@@ -391,9 +425,7 @@ The project is actively maintained as my alternative interactive portfolio.
 - Persist user theme and display preferences between sessions
 - Expand virtual filesystem behavior
 - Add additional terminal commands
-- Improve accessibility and keyboard navigation
 - Add command-based project filtering
-- Add automated testing for the command engine
 - Continue improving the mobile terminal experience
 
 ---
