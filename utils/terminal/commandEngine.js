@@ -225,28 +225,35 @@ export const executeCommand = (input, state) => {
       break;
 
     case "projects":
-      lines.push(
-        toLine(
-          "Projects are currently placeholders because project specifics are not listed in the resume. Update them in utils/data/portfolioContent.js.",
-          outputTone.muted,
-        ),
-      );
+      lines.push(toLine("Featured Projects", outputTone.title));
       lines.push(toLine(""));
+
       content.projects.forEach((project) => {
         lines.push(
           toLine(`${project.title} (${project.slug})`, outputTone.title),
         );
         lines.push(toLine(project.description));
         lines.push(toLine(`Tech: ${project.stack.join(", ")}`));
+
         project.highlights.forEach((item) => lines.push(toLine(`- ${item}`)));
-        lines.push(toLine(`GitHub: ${project.github || "[placeholder]"}`));
-        lines.push(toLine(`Live: ${project.live || "[placeholder]"}`));
+
+        if (project.github) {
+          lines.push(toLine(`GitHub: ${project.github}`));
+        }
+
+        if (project.live) {
+          lines.push(toLine(`Live: ${project.live}`));
+        }
+
         lines.push(toLine(""));
       });
+
       suggestions.push(
-        "open project-placeholder-1",
-        "open project-placeholder-2",
+        "open web-terminal",
+        "open datasecure",
+        "open track-console",
       );
+
       break;
 
     case "experience":

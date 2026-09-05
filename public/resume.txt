@@ -1,49 +1,161 @@
-Abdullah Al Muktadir
-Khilkhet, Dhaka, Bangladesh
-Phone: +880 1734007734
-Email: muktadir.96@gmail.com
-LinkedIn: https://linkedin.com/in/abdullah-al-m-421b619a
-GitHub: https://github.com/AAMuktadir
+# Abdullah Al Muktadir
 
-PROFESSIONAL SUMMARY
-Software Engineer with 4+ years of experience designing and delivering scalable web applications.
-Focused on full-stack development, architecture, and performance optimization in agile environments.
+📍 Dhaka, Bangladesh
+📞 +880 1734007734
+✉️ muktadir.96@gmail.com
+🔗 LinkedIn: https://linkedin.com/in/aa-muktadir
+🔗 GitHub: https://github.com/AAMuktadir
+🔗 Portfolio: https://muktadir.netlify.app
 
-TECHNICAL SKILLS
-- Frameworks and Libraries: React, Next.js, Node.js, Express, Spring, Spring Boot
-- Databases: PostgreSQL, MySQL, MongoDB, Prisma, Mongoose
-- Backend Services: Sanity.io, PocketBase, Supabase, Firebase
-- UI/UX Design: Figma
-- Additional: WordPress, Google App Script, Tailwind CSS
-- Version Control: Git, GitHub
-- Servers: Apache, NGINX, PM2
-- Cloud Platforms: Netlify, Vercel, AWS (S3, RDS), Mongo Atlas
-- Languages: JavaScript/TypeScript, Java, Python
-- Concepts: OOP, Design Patterns, Data Structures and Algorithms
+---
 
-EXPERIENCE
+## 🧑‍💻 Professional Summary
 
-Fullstack Web Developer - Capita Group
-May 2025 - Present
-- Rebuilt websites and CMS with Next.js, Tailwind, and Node.js (in-house)
-- Migrating vendor apps to in-house solutions
-- Auditing for UI/UX and performance improvements
-- Cross-team collaboration to meet business goals
+Full Stack Developer with 4+ years of experience building enterprise applications, internal business systems, e-commerce platforms, and modern web applications across fintech, real estate, and agency environments.
 
-Software Engineer - Planet X Inc Ltd. (rebranded as ATnation)
-February 2022 - April 2025
-- Led full-stack development of 5+ web apps using React/Next.js, Node.js, and PostgreSQL
-- Built REST and GraphQL APIs handling 10K+ daily requests
-- Improved performance by 35% through optimization and caching
-- Mentored 3 junior developers in React best practices
+Experienced across the full development lifecycle, including React and Next.js frontends, Node.js backends, databases, REST APIs, cloud infrastructure, CI/CD, production deployment, and legacy system modernization.
 
-IT Consultant - The Biz House Ltd.
-March 2021 - January 2022
-- Managed VPS servers (NGINX/Apache) achieving 99.9% uptime
-- Coordinated vendor teams for ERP system upgrades
-- Optimized database queries, speeding reports by 50%
+---
 
-EDUCATION
-- BSc in Computer Science and Engineering, BRAC University (CGPA: 3.43/4.00)
-- Higher Secondary Education (HSC), Dhaka City College (GPA: 4.67/5.00)
-- Secondary School Education (SSC), Naogaon Zilla School (GPA: 5.00/5.00)
+## 🛠️ Technical Skills
+
+### Frontend
+- React
+- Next.js
+- TypeScript
+- JavaScript
+- Tailwind CSS
+- Material UI
+- TanStack Query
+- Redux
+- Framer Motion
+
+### Backend
+- Node.js
+- Express.js
+- Spring Boot
+- REST APIs
+- GraphQL
+- JWT
+- Webhooks
+
+### Databases
+- PostgreSQL
+- MongoDB
+- MySQL
+- Prisma ORM
+- SQL
+- NoSQL
+
+### Cloud & DevOps
+- AWS (EC2, S3, RDS)
+- Docker
+- Docker Compose
+- Coolify
+- Linux
+- Nginx
+- PM2
+- CI/CD
+- GitHub Actions
+- Vercel
+- Netlify
+
+### Tools & Testing
+- Git
+- GitHub
+- GitLab
+- Postman
+- Playwright
+- Vitest
+- Jira
+- Figma
+
+### Programming & Concepts
+- TypeScript
+- JavaScript
+- Java
+- Python
+- OOP
+- SOLID Principles
+- System Design
+- Data Structures & Algorithms
+- Agile/Scrum
+- SDLC
+
+---
+
+## 💼 Professional Experience
+
+### Full Stack Developer
+**IPDC Finance PLC**
+📍 Gulshan, Dhaka, Bangladesh
+🗓️ March 2026 – Present
+
+- Rebuilt IPDC Finance's large-scale corporate website from legacy Laravel/Nuxt to Next.js
+- Developed enterprise Admin Portal modules with reusable components and REST API integrations
+- Built and enhanced Card Management System, Dedupe Portal, and enterprise reporting workflows
+- Developed reporting features with filtering, pagination, and PDF/CSV/Excel exports
+- Managed UAT deployment, Linux server configuration, technical SEO, JSON-LD, and production optimization
+
+---
+
+### Full Stack Developer
+**Capita Group**
+📍 Banani, Dhaka, Bangladesh
+🗓️ May 2025 – February 2026
+
+- Developed an HR Management System for attendance, leave management, approvals, and employee workflows
+- Built a Billing Management System for rent, electricity, internet, and other property-related invoices
+- Rebuilt group websites and CMS platforms while migrating vendor-built applications in-house
+- Introduced Coolify-based deployment infrastructure for application deployment, server management, and CI/CD
+- Improved UI/UX, responsiveness, maintainability, and performance across multiple applications
+
+---
+
+### Full Stack Developer
+**Planet X Inc Ltd. (ATnation)**
+📍 Dhaka, Bangladesh
+🗓️ February 2022 – April 2025
+
+- Delivered full-stack web and mobile applications for local and international clients
+- Developed 5+ e-commerce platforms with commerce and administrative workflows
+- Built separate proposal applications presented to the Bangladesh Tourism Ministry and Bangladesh Police
+- Developed an NGO project management platform with cloud, database, and deployment capabilities
+- Built client solutions including an online book library and donation platform with AWS and on-premise deployments
+
+---
+
+### IT Consultant (Part-Time)
+**The Biz House Ltd.**
+📍 Baridhara DOHS, Dhaka, Bangladesh
+🗓️ March 2021 – January 2022
+
+- Managed company websites, web applications, hosting, and server environments
+- Coordinated with software and IT vendors for implementation, upgrades, and technical support
+- Supported business teams in identifying requirements and evaluating technology solutions
+- Handled deployments, troubleshooting, domain/hosting configuration, and technical operations
+
+---
+
+## 🎓 Education
+
+### Bachelor of Science (BSc) in Computer Science and Engineering
+**BRAC University | Dhaka, Bangladesh**
+- CGPA: 3.43 out of 4.00
+🗓️ May 2018 – May 2023
+
+---
+
+### Higher Secondary Certificate (HSC), Science
+**Dhaka City College | Dhaka, Bangladesh**
+- GPA: 4.67 out of 5.00
+🗓️ 2014 – 2016
+
+---
+
+### Secondary School Certificate (SSC), Science
+**Naogaon Zilla School | Naogaon, Bangladesh**
+- GPA: 5.00 out of 5.00
+🗓️ 2008 – 2014
+
+---
